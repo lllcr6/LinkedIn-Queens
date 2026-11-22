@@ -1,6 +1,24 @@
 # Queens Lab
 
-A Python project for queen puzzle algorithms with a local web interface. It requires Python 3.9+ and uses only the standard library; no pip or npm installation is needed.
+A queen puzzle algorithm playground with a Python implementation and a browser-only JavaScript edition. The local Python version requires Python 3.9+ and uses only the standard library; no pip or npm installation is needed.
+
+## Online version
+
+**[Open Queens Lab](https://lllcr6.github.io/LinkedIn-Queens/)** — no installation or Python server required.
+
+Choose a board size, seed, generation strategy, and solver, then click **Generate Board** and **Solve Current Board**. The online version supports connected-region generation, optional uniqueness checks, all three solving strategies, solution switching, and JSON import/export. It displays generation time and provides a **Stop generation** button. When multiple solutions exist, it keeps at most five; reaching that limit does not mean there are only five solutions. **Change seed** selects a new random seed for the next generation.
+
+The site is hosted on GitHub Pages. Generation and solving run locally in your browser using JavaScript Web Workers, keeping the interface responsive during searches. Stopping generation terminates its worker. The Python edition runs the algorithms in a local Python server instead. Both editions follow the same puzzle rules and algorithm designs, but use different random number generators: a seed is reproducible within the same implementation and need not produce the same board across editions.
+
+### Updating the online version
+
+The browser algorithms live in `browser/`, and the interface is shared with `queens/web/`. After changing either, rebuild the static site from the project directory:
+
+```bash
+python3 scripts/build_static.py
+```
+
+Commit the source changes and the generated `docs/` files, then push to `main`. GitHub Pages publishes the site from `/docs` on that branch. To preview the static edition locally, run `python3 -m http.server 8010 --directory docs` and open <http://localhost:8010>.
 
 ## Getting started
 
@@ -27,10 +45,14 @@ queens/
     growth.py            Connected region growth, filtering, and second-solution boundary repair
   service.py             Algorithm selection, request validation, and unified application entry point
   jobs.py                Background generation jobs, status queries, and cooperative cancellation
-  server.py              Localhost-only HTTP server
+  server.py              Python HTTP server (localhost by default)
   web/                   Vanilla HTML / CSS / JS frontend
+browser/                 JavaScript strategies and Web Worker adapter
+scripts/build_static.py  Build the browser edition using the shared interface
+docs/                    Generated static site published by GitHub Pages
 tests/
   test_algorithms.py     Independent permutation oracle and generation invariant tests
+  browser.test.mjs        JavaScript solver and generator tests
 ```
 
 The project uses **Strategy + Registry/Factory**: solvers implement `Solver.solve(puzzle, budget)`, and generators implement `Generator.generate(n, unique, rng, solver, budget)`. Generators receive a solver through its interface and do not depend on a particular algorithm.
@@ -63,7 +85,7 @@ Import the new module in `queens/solvers/__init__.py`. The frontend reads the re
 
 Generated boards have at most one single-cell region, each region contains at most `floor(N*N/2)` cells, and all regions are connected through orthogonal adjacency. Seed queens stay fixed, so every generated or repaired board remains solvable. A board is declared unique only after the solver completes a uniqueness check. Solvers accept imported boards that do not satisfy the generation size limits, but still validate connectivity and labels.
 
-The frontend supports generation for N=4–12; the solve interface supports N=1–12. N=1 cannot be generated under the half-board size limit, and N=2 and N=3 have no permutations satisfying the adjacency restriction. Random generation is not a complete algorithm. Web generation has no time limit or cumulative node/attempt limit; it continues until it succeeds, reaches the DP memory protection limit, or the user clicks **Stop generation**. The frontend shows **Generation time** in real time and retains the backend timing after completion or cancellation. Cancellation passes an Event to the generator and solver to stop the search, rather than merely cancelling the frontend request. Closing the page also attempts to send a cancellation request.
+The frontend supports generation for N=4–12; the solve interface supports N=1–12. N=1 cannot be generated under the half-board size limit, and N=2 and N=3 have no permutations satisfying the adjacency restriction. Random generation is not a complete algorithm. Web generation has no time limit or cumulative node/attempt limit; it continues until it succeeds, reaches the DP memory protection limit, or the user clicks **Stop generation**. The frontend shows **Generation time** in real time and retains the measured duration after completion or cancellation. In the Python edition, cancellation passes an Event to the generator and solver to stop the search, rather than merely cancelling the frontend request. Closing the page also attempts to cancel active generation. The browser edition terminates its Web Worker directly.
 
 Synchronous Python/API generation defaults to 400 attempts and 500,000 nodes. Ordinary solving defaults to 500,000 nodes, and DP is limited to 100,000 states per call. None has a default time limit. Reaching a resource limit must not be interpreted as proof that a puzzle has no solution. A random seed reproduces the board with the same implementation when resource limits are not reached.
 
