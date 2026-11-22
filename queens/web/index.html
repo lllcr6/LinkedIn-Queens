@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Queens Lab</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<header><a class="brand" href="/">♛ <span>QUEENS LAB</span></a></header>
+<main>
+<div class="workspace">
+<aside class="panel controls"><h2>Generate</h2>
+<div class="pair"><label>Board size<select id="size"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label><label>Seed<input id="seed" type="number" min="0" max="4294967295" value="42"></label></div>
+<label>Generator<select id="generator"></select></label><p class="hint" id="generator-hint"></p>
+<label class="check"><input id="unique" type="checkbox" checked> Unique solution</label>
+<button id="generate" class="primary">Generate board</button><button id="stop" class="secondary" hidden>Stop generation</button><button id="randomize" class="subtle">Change seed</button>
+<div class="generation-time">Generation time <strong id="generation-time">—</strong></div>
+<div class="divider"></div><h2>Solve</h2>
+<label>Solver<select id="solver"></select></label><p class="hint" id="solver-hint"></p>
+<button id="solve" class="secondary" disabled>Solve board</button>
+<p class="rules">One queen per row, column, and region. Queens cannot touch diagonally.</p>
+</aside>
+<section class="panel board-panel"><div class="board-heading"><div><h2 id="board-title">Board</h2></div><span class="badge" id="classification">No board</span></div>
+<div id="board" class="board empty" aria-label="Queens board"><div class="empty-copy"><span>♛</span><p>Generate or import a board.</p></div></div>
+<div class="board-tools"><label class="check"><input id="show" type="checkbox" disabled> Show solution</label><select id="solution" aria-label="Select solution" disabled><option value="0">Solution 1</option></select><button id="export" class="subtle" disabled>Export JSON</button></div>
+<div id="message" class="message" role="status" aria-live="polite">Ready.</div>
+<div class="stats"><div><span>Solve time</span><strong id="time">—</strong></div><div><span id="metric-label">Search nodes</span><strong id="metric">—</strong></div><div><span id="extra-label">Cache hits</span><strong id="extra">—</strong></div></div>
+<div id="details" class="hint"></div>
+</section>
+</div>
+<details class="panel import-panel"><summary>Import / edit board</summary><p>Paste a region matrix or exported JSON. Use labels 0 to N−1 and orthogonally connected regions. Generator size limits do not apply to imports.</p><textarea id="matrix" rows="7" spellcheck="false" aria-label="Region matrix JSON" placeholder="[[0, 0, ...], ...]"></textarea><button id="import" class="secondary">Load and validate</button></details>
+<footer>At most one singleton region · Region size ≤ ⌊N²/2⌋ · Orthogonal connectivity</footer>
+</main></body></html>

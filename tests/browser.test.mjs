@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {solve,generate,accepts,generationValid,validate,SOLVERS,Budget,SearchLimit} from '../browser/engine.mjs';
+function permutations(a){if(!a.length)return [[]];return a.flatMap((x,i)=>permutations(a.filter((_,j)=>j!==i)).map(p=>[x,...p]));}
+function brute(b){return permutations(Array.from({length:b.length},(_,i)=>i)).filter(q=>q.every((c,i)=>!i||Math.abs(c-q[i-1])!==1)&&new Set(q.map((c,i)=>b[i][c])).size===b.length);}
+function check(b){const all=brute(b);for(const key of SOLVERS.keys()){const r=solve(b,key);assert.equal(r.solutions.length,Math.min(5,all.length));assert.equal(r.limit_reached,all.length>=5);assert.equal(new Set(r.solutions.map(JSON.stringify)).size,r.solutions.length);for(const q of r.solutions)assert(all.some(a=>a.every((c,i)=>c===q[i])));}}
+test('all solvers match independent permutation enumeration',()=>{for(let n=1;n<=7;n++)check(Array.from({length:n},(_,i)=>Array(n).fill(i)));});
+test('unique and impossible region constraints',()=>{let b=Array.from({length:4},()=>Array(4).fill(3));[1,3,0].forEach((c,i)=>b[i][c]=i);assert.equal(brute(b).length,1);check(b);b=Array.from({length:4},()=>Array(4).fill(3));b[0][0]=0;b[0][1]=1;b[3][0]=2;assert.equal(brute(b).length,0);check(b);});
+test('seeded generators preserve constraints and match solver oracle',()=>{for(const generator of ['growth','repair'])for(const unique of [false,true]){const data={n:generator==='growth'?5:6,seed:42,generator,unique};const r=generate(data,new Budget(5000000),1000);assert.equal(r.status,'success');validate(r.regions);assert(generationValid(r.regions));assert(accepts(r.regions,r.witness));check(r.regions);if(unique)assert.equal(brute(r.regions).length,1);assert.deepEqual(generate(data,new Budget(5000000),1000).regions,r.regions);}});
+test('random boards across seeds',()=>{for(let seed=0;seed<12;seed++){const r=generate({n:6,seed,unique:false},new Budget(),100);assert.equal(r.status,'success');check(r.regions);}});
+test('invalid boards and search limits',()=>{assert.throws(()=>validate([[0,1],[1,0]]));assert.throws(()=>generate({n:6,seed:-1}));for(const key of SOLVERS.keys())assert.throws(()=>solve(Array.from({length:6},(_,i)=>Array(6).fill(i)),key,new Budget(0)),SearchLimit);});
